@@ -8,6 +8,18 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  // Otimizações para Vercel
+  output: 'standalone',
+  poweredByHeader: false,
+  compress: true,
+  
+  // Configurações de imagem
+  images: {
+    domains: [],
+    formats: ['image/avif', 'image/webp'],
+  },
+  
+  // Apenas para desenvolvimento local
   ...(process.env.NODE_ENV === 'development' && {
     experimental: {
       allowedDevOrigins: [
