@@ -1,0 +1,90 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- Funções de Apoio ---
+
+    // Verifica se o usuário está autenticado
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Obtém o perfil do usuário logado
+    function getUserProfile() {
+      return get(/databases/$(database)/documents/userProfiles/$(request.auth.uid)).data;
+    }
+
+    // Verifica se o usuário é Admin
+    function isAdmin() {
+      return getUserProfile().role == 'admin';
+    }
+
+    // Verifica se o usuário está ativo
+    function isActiveUser() {
+      return getUserProfile().isActive == true;
+    }
+
+    // Verifica se o grupo está ativo
+    function isActiveGroup(groupId) {
+      return get(/databases/$(database)/documents/groups/$(groupId)).data.isActive == true;
+    }
+
+    // --- Coleções ---
+
+    // Perfis de Usuário
+    match /userProfiles/{userId} {
+      // Admin pode ler/escrever em todos os perfis
+      // Usuário comum só pode ler o próprio perfil
+      allow read: if isAuthenticated() && isActiveUser() && (isAdmin() || request.auth.uid == userId);
+      allow write: if isAuthenticated() && isActiveUser() && isAdmin();
+    }
+
+    // Grupos (Lojas)
+    match /groups/{groupId} {
+      // Admin pode ler/escrever em todos os grupos
+      // Usuário comum pode ler o próprio grupo
+      allow read: if isAuthenticated() && isActiveUser() && (isAdmin() || getUserProfile().groupId == groupId);
+      allow write: if isAuthenticated() && isActiveUser() && isAdmin();
+    }
+
+    // Produtos (Estoque)
+    match /products/{productId} {
+      // Acesso total para Admin
+      allow read, write: if isAuthenticated() && isActiveUser() && isAdmin();
+
+      // Acesso para usuário comum
+      allow read, write: if isAuthenticated() && isActiveUser() 
+                           && getUserProfile().groupId == resource.data.groupId
+                           && isActiveGroup(resource.data.groupId);
+    }
+
+    // Movimentações de Estoque
+    match /stockMovements/{movementId} {
+      // Acesso total para Admin
+      allow read, write: if isAuthenticated() && isActiveUser() && isAdmin();
+
+      // Acesso para usuário comum
+      allow read, write: if isAuthenticated() && isActiveUser() 
+                           && getUserProfile().groupId == resource.data.groupId
+                           && isActiveGroup(resource.data.groupId);
+    }
+
+    // Configurações do Usuário
+    match /settings/{userId} {
+      // Usuário só pode ler/escrever nas próprias configurações
+      allow read, write: if isAuthenticated() && isActiveUser() && request.auth.uid == userId;
+    }
+
+    // Dados de Vendas (se aplicável)
+    match /salesData/{saleId} {
+        // Acesso total para Admin
+        allow read, write: if isAuthenticated() && isActiveUser() && isAdmin();
+
+        // Acesso para usuário comum
+        allow read, write: if isAuthenticated() && isActiveUser() 
+                            && getUserProfile().groupId == resource.data.groupId
+                            && isActiveGroup(resource.data.groupId);
+    }
+  }
+}

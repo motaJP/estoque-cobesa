@@ -1,0 +1,232 @@
+{
+  "entities": {
+    "Product": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Product",
+      "type": "object",
+      "description": "Represents a product in the inventory.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the product."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the product."
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description of the product."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL of the product image.",
+          "format": "uri"
+        },
+        "categoryId": {
+          "type": "string",
+          "description": "Reference to Category. (Relationship: Category 1:N Product)"
+        },
+        "sku": {
+          "type": "string",
+          "description": "Stock Keeping Unit; a unique identifier for each distinct product and service that can be purchased."
+        },
+        "unitPrice": {
+          "type": "number",
+          "description": "Price of one unit of the product."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "categoryId",
+        "sku",
+        "unitPrice"
+      ]
+    },
+    "Category": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Category",
+      "type": "object",
+      "description": "Represents a category of products.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the category."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the category."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the category."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description"
+      ]
+    },
+    "StockEntry": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "StockEntry",
+      "type": "object",
+      "description": "Represents an entry of stock for a product.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the stock entry."
+        },
+        "productId": {
+          "type": "string",
+          "description": "Reference to Product. (Relationship: Product 1:N StockEntry)"
+        },
+        "quantity": {
+          "type": "number",
+          "description": "Quantity of the product added to the stock."
+        },
+        "entryDate": {
+          "type": "string",
+          "description": "Date and time when the stock entry was recorded.",
+          "format": "date-time"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional notes about the stock entry."
+        }
+      },
+      "required": [
+        "id",
+        "productId",
+        "quantity",
+        "entryDate"
+      ]
+    },
+    "StockExit": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "StockExit",
+      "type": "object",
+      "description": "Represents an exit of stock for a product.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the stock exit."
+        },
+        "productId": {
+          "type": "string",
+          "description": "Reference to Product. (Relationship: Product 1:N StockExit)"
+        },
+        "quantity": {
+          "type": "number",
+          "description": "Quantity of the product removed from the stock."
+        },
+        "exitDate": {
+          "type": "string",
+          "description": "Date and time when the stock exit was recorded.",
+          "format": "date-time"
+        },
+        "reason": {
+          "type": "string",
+          "description": "Reason for the stock exit."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional notes about the stock exit."
+        }
+      },
+      "required": [
+        "id",
+        "productId",
+        "quantity",
+        "exitDate",
+        "reason"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/categories/{categoryId}",
+        "definition": {
+          "entityName": "Category",
+          "schema": {
+            "$ref": "#/backend/entities/Category"
+          },
+          "description": "Stores product category data. Each document represents a category with its name and description.",
+          "params": [
+            {
+              "name": "categoryId",
+              "description": "The unique identifier for the category."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/products/{productId}",
+        "definition": {
+          "entityName": "Product",
+          "schema": {
+            "$ref": "#/backend/entities/Product"
+          },
+          "description": "Stores product data. Each document represents a product with its details, including name, description, categoryId, SKU, and unit price.",
+          "params": [
+            {
+              "name": "productId",
+              "description": "The unique identifier for the product."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/products/{productId}/stockEntries/{stockEntryId}",
+        "definition": {
+          "entityName": "StockEntry",
+          "schema": {
+            "$ref": "#/backend/entities/StockEntry"
+          },
+          "description": "Stores stock entry data for a product. Each document represents an entry of stock, including the quantity, entry date, and optional notes.",
+          "params": [
+            {
+              "name": "productId",
+              "description": "The unique identifier for the product."
+            },
+            {
+              "name": "stockEntryId",
+              "description": "The unique identifier for the stock entry."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/products/{productId}/stockExits/{stockExitId}",
+        "definition": {
+          "entityName": "StockExit",
+          "schema": {
+            "$ref": "#/backend/entities/StockExit"
+          },
+          "description": "Stores stock exit data for a product. Each document represents an exit of stock, including the quantity, exit date, reason, and optional notes.",
+          "params": [
+            {
+              "name": "productId",
+              "description": "The unique identifier for the product."
+            },
+            {
+              "name": "stockExitId",
+              "description": "The unique identifier for the stock exit."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to manage an inventory tracking application (Stock Master) with features for tracking stock entries, exits, and product catalogs. The structure leverages path-based ownership for data organization. Each entity (Category, Product, StockEntry, StockExit) has its own top-level collection for scalability. The design emphasizes simplicity and security, with no complex authorization logic required. This structure directly supports the application's core features: Inventory Tracking, Entry and Exit logging, and Product Catalog management.\n\nThe structure is designed to facilitate simple updates on the system to reflect the information.\n\nAuthorization Independence: The data structure does not require complex `get()` calls for authorization. All documents in each collection have the same access requirements.\n\nQAPs (Rules are not Filters): The segregation of data into separate collections based on entity type simplifies querying and listing operations while maintaining security."
+  }
+}
